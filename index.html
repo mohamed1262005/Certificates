@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mohamed Sameh Abdo | AI Engineer - Elite Credential Vault</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bg0: '#020617',
+                        bg1: '#08111F',
+                        bg2: '#0B1220',
+                        primary: '#00F5FF',
+                        secondary: '#7C3AED',
+                        accent: '#38BDF8',
+                        success: '#00E676',
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- GSAP for Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #7C3AED; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00F5FF; }
+
+        .custom-cursor {
+            pointer-events: none;
+            position: fixed; top: 0; left: 0; border-radius: 50%;
+            transform: translate(-50%, -50%); transition: width 0.3s, height 0.3s; z-index: 9999;
+        }
+        .cursor-dot { width: 8px; height: 8px; background-color: #00F5FF; box-shadow: 0 0 10px #00F5FF; }
+        .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(0, 245, 255, 0.4); background: rgba(0, 245, 255, 0.03); }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(0, 245, 255, 0.4);
+            box-shadow: 0 0 30px rgba(0, 245, 255, 0.15);
+            transform: translateY(-6px);
+        }
+
+        #loader {
+            position: fixed; inset: 0; background: #020617; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'Outfit', sans-serif;
+        }
+        #neural-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+        .profile-glow { box-shadow: 0 0 50px rgba(124, 58, 237, 0.3), 0 0 100px rgba(0, 245, 255, 0.2); }
+    </style>
+</head>
+<body class="bg-bg0 text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-primary selection:text-bg0">
+
+    <div class="custom-cursor cursor-dot" id="cursor-dot"></div>
+    <div class="custom-cursor cursor-ring" id="cursor-ring"></div>
+
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="w-72">
+            <div class="flex justify-between text-xs text-primary font-mono mb-2 tracking-widest uppercase">
+                <span id="loader-status">Initializing AI Core...</span>
+                <span id="loader-percent">0%</span>
+            </div>
+            <div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                <div id="loader-bar" class="h-full bg-gradient-to-r from-secondary to-primary w-0 transition-all duration-75"></div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="neural-canvas"></canvas>
+    <div class="fixed top-0 left-0 h-1 bg-gradient-to-r from-secondary via-accent to-primary z-50 transition-all duration-100" id="scroll-progress" style="width: 0%"></div>
+
+    <div class="relative z-10">
+        <!-- Floating Admin Panel Toggle Button -->
+        <div class="fixed top-6 right-6 z-40">
+            <button onclick="toggleAdminPanel()" class="px-4 py-2.5 rounded-xl bg-secondary/80 hover:bg-secondary text-white font-bold text-xs uppercase tracking-wider backdrop-blur-md border border-white/20 shadow-lg flex items-center gap-2 transition-all">
+                <i class="fa-solid fa-gear"></i> Manage Vault (Admin)
+            </button>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="min-h-screen flex flex-col items-center justify-center text-center px-4 relative pt-20 pb-16">
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-bg0/50 to-bg0 pointer-events-none"></div>
+            
+            <div class="relative z-10 max-w-4xl mx-auto">
+                <div class="relative inline-block mb-8">
+                    <div class="absolute -inset-4 rounded-full bg-gradient-to-r from-secondary to-primary opacity-70 blur-xl animate-spin" style="animation-duration: 12s;"></div>
+                    <div class="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full overflow-hidden border-2 border-primary/50 profile-glow">
+                        <img id="profile-img-display" src="assets/my_photo.jpeg" alt="Mohamed Sameh Abdo" class="w-full h-full object-cover object-top">
+                    </div>
+                </div>
+
+                <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white mb-4">
+                    Mohamed <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-secondary">Sameh Abdo</span>
+                </h1>
+
+                <div class="h-10 mb-6 flex items-center justify-center">
+                    <p class="text-lg sm:text-xl font-medium text-accent font-mono tracking-wide" id="typewriter"></p>
+                </div>
+
+                <p class="text-slate-400 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed mb-12">
+                    AWS Certified Machine Learning Engineer, Solutions Architect, and AI Prompter. Explore my officially verified credentials.
+                </p>
+
+                <div class="flex flex-wrap items-center justify-center gap-4">
+                    <a href="#vault" class="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-accent text-bg0 font-bold text-sm uppercase tracking-wider transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 hover:scale-105">
+                        Explore Vault <i class="fa-solid fa-arrow-down ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Vault Section -->
+        <section id="vault" class="py-24 px-4 max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-5xl font-extrabold text-white mb-4">Official Credential Vault</h2>
+                <p class="text-slate-400 max-w-xl mx-auto">Directly verified credentials, Cloud certifications, and AI achievements.</p>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="mb-12 flex flex-col gap-6 items-center">
+                <div class="relative w-full max-w-md">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="live-search" placeholder="Search certifications..." class="w-full pl-11 pr-4 py-3.5 rounded-xl glass-card text-white placeholder-slate-500 focus:outline-none focus:border-primary transition-all text-sm">
+                </div>
+            </div>
+
+            <!-- Certificate Grid (Dynamically Rendered) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="cert-grid">
+                <!-- Loaded via JavaScript dynamically -->
+            </div>
+
+            <div id="no-results" class="hidden text-center py-20">
+                <i class="fa-solid fa-folder-open text-4xl text-slate-600 mb-4"></i>
+                <p class="text-slate-400 text-lg">No matching certificates found.</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="border-t border-white/10 bg-bg1/80 backdrop-blur-md py-16 px-4">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-2">Mohamed Sameh Abdo</h3>
+                    <p class="text-slate-400 text-sm">AI Engineer & Cloud Architect</p>
+                </div>
+                <div class="text-slate-500 text-xs text-center md:text-right font-mono">
+                    <p>© 2026 Mohamed Sameh Abdo.</p>
+                    <p class="mt-1">Secured Official Credential Vault.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Admin Management Modal -->
+    <div id="admin-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
+        <div class="glass-card max-w-xl w-full rounded-2xl p-6 sm:p-8 relative border border-white/15 shadow-2xl">
+            <button onclick="toggleAdminPanel()" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-slate-300 hover:text-white transition-all">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-2xl font-extrabold text-white mb-6">Vault Management Panel</h3>
+            
+            <div class="space-y-6">
+                <!-- Change Profile Image -->
+                <div class="p-4 rounded-xl bg-bg2 border border-white/5">
+                    <label class="block text-sm font-semibold text-accent mb-2">Update Profile Picture</label>
+                    <input type="file" id="admin-profile-file" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-bg0 hover:file:bg-accent cursor-pointer">
+                </div>
+
+                <!-- Add New Certificate -->
+                <div class="p-4 rounded-xl bg-bg2 border border-white/5 space-y-3">
+                    <label class="block text-sm font-semibold text-primary mb-1">Add New Certificate</label>
+                    <input type="text" id="new-title" placeholder="Certificate Title" class="w-full px-4 py-2.5 rounded-xl glass-card text-white text-xs">
+                    <input type="text" id="new-issuer" placeholder="Issuer (e.g. AWS, Manara)" class="w-full px-4 py-2.5 rounded-xl glass-card text-white text-xs">
+                    <input type="text" id="new-year" placeholder="Year / Date (e.g. 2026)" class="w-full px-4 py-2.5 rounded-xl glass-card text-white text-xs">
+                    <input type="text" id="new-id" placeholder="Credential ID / Validation Number" class="w-full px-4 py-2.5 rounded-xl glass-card text-white text-xs">
+                    <input type="text" id="new-link" placeholder="Verification Link" class="w-full px-4 py-2.5 rounded-xl glass-card text-white text-xs">
+                    <input type="text" id="new-img" placeholder="Certificate Image Path (e.g. assets/manara_machin.png)" class="w-full px-4 py-2.5 rounded-xl glass-card text-white text-xs">
+                    <button onclick="addNewCertificate()" class="w-full py-3 rounded-xl bg-primary text-bg0 font-bold text-xs uppercase tracking-wider transition-all hover:bg-accent">
+                        Add to Vault
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Certificate Modal -->
+    <div id="cert-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
+        <div class="glass-card max-w-3xl w-full rounded-2xl p-6 sm:p-8 relative border border-white/15 shadow-2xl" id="modal-content">
+            <button onclick="closeModal()" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-slate-300 hover:text-white transition-all">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <span id="modal-id" class="text-xs font-mono text-slate-400">ID: 00000</span>
+            </div>
+            <h3 id="modal-title" class="text-2xl sm:text-3xl font-extrabold text-white mb-2">Title</h3>
+            <p id="modal-issuer" class="text-sm font-mono text-accent mb-6">Issuer & Date</p>
+
+            <!-- Certificate Image Container Inside Modal -->
+            <div class="h-64 sm:h-96 bg-bg0 rounded-xl border border-white/10 flex flex-col items-center justify-center relative mb-8 overflow-hidden p-2">
+                <img id="modal-cert-img" src="" alt="Certificate Preview" class="w-full h-full object-contain">
+            </div>
+
+            <div class="flex flex-wrap items-center justify-end gap-4">
+                <a id="modal-verify-btn" href="#" target="_blank" class="px-6 py-3 rounded-xl bg-primary text-bg0 font-bold text-xs uppercase tracking-wider transition-all hover:bg-accent flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open / Verify Certificate
+                </a>
+                <button onclick="closeModal()" class="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs uppercase tracking-wider transition-all border border-white/10">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Certificates including Manara, AWS Official Verification Cards, and others
+        let certificates = JSON.parse(localStorage.getItem('mohamed_certs')) || [
+            {
+                title: "AWS Certified Machine Learning Engineer – Associate",
+                issuer: "Amazon Web Services (AWS)",
+                year: "July 23, 2026",
+                id: "f24ad9a4ade446d382472e7ebf3b90cf",
+                link: "https://www.credly.com/badges/e9159743-a509-4331-ab97-74124c206cc1/public_url",
+                img: "assets/image_machine.png"
+            },
+            {
+                title: "AWS Certified Solutions Architect – Associate",
+                issuer: "Amazon Web Services (AWS)",
+                year: "July 24, 2026",
+                id: "567aabd0-b832-4dad-9835-1b4661632a44",
+                link: "https://credly.com/badges/567aabd0-b832-4dad-9835-1b4661632a44",
+                img: "assets/image_solutions_architect.png"
+                
+
+            },
+            {
+                title: "AWS Certified Machine Learning Engineer - Associate (Official Verification)",
+                issuer: "Amazon Web Services (AWS)",
+                year: "July 23, 2026",
+                id: "f24ad9a4ade446d382472e7ebf3b90cf",
+                link: "https://cp.certmetrics.com/amazon/en/public/verify/credential",
+                img: "assets/Certified Machine.png"
+            },
+            {
+                title: "AWS Certified Solutions Architect - Associate (Official Verification)",
+                issuer: "Amazon Web Services (AWS)",
+                year: "July 24, 2026",
+                id: "b274678dcab644bd974840ee636a4bd2",
+                link: "https://cp.certmetrics.com/amazon/en/public/verify/credential",
+                img: "assets/Certified_Solutions.png "
+            },
+            {
+                title: "AWS: Becoming a Machine Learning Engineer",
+                issuer: "Manara / AWS",
+                year: "6/22/2026",
+                id: "manara-ml-2026",
+                link: "#",
+                img: "assets/manara_machin.png"
+            },
+            {
+                title: "AWS 2: Becoming a Solutions Architect",
+                issuer: "Manara / AWS",
+                year: "7/5/2026",
+                id: "manara-sa-2026",
+                link: "#",
+                img: "assets/manara_sol.png"
+            },
+            {
+                title: "One Million Prompters Initiative Certificate",
+                issuer: "Dubai Future Foundation",
+                year: "2026",
+                id: "DFF-1M-AI",
+                link: "#",
+                img: "assets/certificate.png"
+            },
+            {
+                title: "Python Programming Certificate",
+                issuer: "Programming Institute",
+                year: "2025-09-05",
+                id: "PY-2025",
+                link: "#",
+                img: "assets/شهادةpi_page-0001.jpg"
+            }
+        ];
+
+        // Load saved profile image if available
+        const savedProfileImg = localStorage.getItem('mohamed_profile_img');
+        if (savedProfileImg) {
+            document.getElementById('profile-img-display').setAttribute('src', savedProfileImg);
+        }
+
+        // Render Certificates
+        function renderCertificates(filterQuery = '') {
+            const grid = document.getElementById('cert-grid');
+            const noRes = document.getElementById('no-results');
+            grid.innerHTML = '';
+
+            let filtered = certificates.filter(c => 
+                c.title.toLowerCase().includes(filterQuery) || 
+                c.issuer.toLowerCase().includes(filterQuery) || 
+                c.year.toLowerCase().includes(filterQuery)
+            );
+
+            if (filtered.length === 0) {
+                noRes.classList.remove('hidden');
+                return;
+            } else {
+                noRes.classList.add('hidden');
+            }
+
+            filtered.forEach((cert) => {
+                const card = document.createElement('div');
+                card.className = "cert-card glass-card rounded-2xl overflow-hidden flex flex-col justify-between group p-6";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-success/10 text-success border border-success/20 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-check text-[10px]"></i> Verified
+                            </span>
+                            <span class="text-xs font-mono text-slate-400">${cert.year}</span>
+                        </div>
+                        <div class="h-44 bg-bg2 rounded-xl mb-6 relative overflow-hidden flex items-center justify-center border border-white/5 p-2">
+                            <img src="${cert.img || 'assets/manara_machin.png'}" alt="${cert.title}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-bg0/80 text-[9px] font-mono text-accent">ID: ${cert.id.substring(0, 12)}...</div>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-1 group-hover:text-primary transition-colors">${cert.title}</h3>
+                        <p class="text-xs font-mono text-slate-400 mb-3">Issued by: ${cert.issuer}</p>
+                    </div>
+                    <div class="pt-4 flex gap-3">
+                        <button onclick="openModal('${encodeURIComponent(cert.title)}', '${encodeURIComponent(cert.issuer)}', '${cert.year}', '${cert.id}', '${cert.link}', '${cert.img}')" class="flex-1 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-primary hover:text-bg0 text-white font-semibold text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2 border border-white/10">
+                            <i class="fa-solid fa-eye text-sm"></i> View
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        renderCertificates();
+
+        // Search listener
+        document.getElementById('live-search').addEventListener('input', (e) => {
+            renderCertificates(e.target.value.toLowerCase().trim());
+        });
+
+        // Admin Panel Toggle
+        function toggleAdminPanel() {
+            const modal = document.getElementById('admin-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Profile Image Uploader
+        document.getElementById('admin-profile-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const base64Img = event.target.result;
+                    localStorage.setItem('mohamed_profile_img', base64Img);
+                    document.getElementById('profile-img-display').setAttribute('src', base64Img);
+                    alert('Profile picture updated successfully!');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Add New Certificate from Admin Panel
+        function addNewCertificate() {
+            const title = document.getElementById('new-title').value.trim();
+            const issuer = document.getElementById('new-issuer').value.trim();
+            const year = document.getElementById('new-year').value.trim();
+            const id = document.getElementById('new-id').value.trim();
+            const link = document.getElementById('new-link').value.trim();
+            const img = document.getElementById('new-img').value.trim();
+
+            if (!title || !issuer) {
+                alert('Please fill at least the Title and Issuer fields.');
+                return;
+            }
+
+            certificates.push({ 
+                title, 
+                issuer, 
+                year: year || '2026', 
+                id: id || 'MS-CERT', 
+                link: link || '#',
+                img: img || 'assets/manara_machin.png'
+            });
+            localStorage.setItem('mohamed_certs', JSON.stringify(certificates));
+            renderCertificates();
+            toggleAdminPanel();
+            alert('Certificate added successfully to your vault!');
+        }
+
+        // Modal Controls
+        function openModal(title, issuer, year, id, link, img) {
+            document.getElementById('modal-title').innerText = decodeURIComponent(title);
+            document.getElementById('modal-issuer').innerText = `Issued by ${decodeURIComponent(issuer)} • ${year}`;
+            document.getElementById('modal-id').innerText = `ID: ${id}`;
+            document.getElementById('modal-verify-btn').setAttribute('href', link);
+            document.getElementById('modal-cert-img').setAttribute('src', img);
+            document.getElementById('cert-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('cert-modal').classList.add('hidden');
+        }
+
+        // Loader & Canvas animations
+        window.addEventListener('load', () => {
+            gsap.to('#loader', { opacity: 0, duration: 0.8, onComplete: () => document.getElementById('loader').remove() });
+        });
+
+        const canvas = document.getElementById('neural-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width; this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.8; this.vy = (Math.random() - 0.5) * 0.8;
+                this.radius = Math.random() * 2 + 1;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > height) this.vy = -this.vy;
+            }
+            draw() {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 245, 255, 0.5)'; ctx.fill();
+            }
+        }
+        for (let i = 0; i < 60; i++) particles.push(new Particle());
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        const titles = ["AWS Certified Machine Learning Engineer", "AWS Certified Solutions Architect", "AI Prompter & Cloud Expert"];
+        let tIdx = 0, cIdx = 0, del = false;
+        const tw = document.getElementById('typewriter');
+        let typeTimeout;
+
+        function type() {
+            let cur = titles[tIdx];
+            tw.innerText = del ? cur.substring(0, cIdx - 1) : cur.substring(0, cIdx + 1);
+            del ? cIdx-- : cIdx++;
+            let spd = del ? 40 : 80;
+            if (!del && cIdx === cur.length) { spd = 2000; del = true; }
+            else if (del && cIdx === 0) { del = false; tIdx = (tIdx + 1) % titles.length; spd = 500; }
+            typeTimeout = setTimeout(type, spd);
+        }
+        setTimeout(type, 1000);
+    </script>
+</body>
+</html>
